@@ -1,0 +1,81 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabase';
+
+function Players() {
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      setLoading(true);
+      const { data, error } = await supabase.from('teams_members').select(`
+        id,
+        player_name,
+        teams (
+          school_name
+        )
+      `);
+
+      if (error) {
+        console.error('Error fetching players:', error);
+        setError(error.message);
+      } else {
+        console.log('Fetched data:', data); // Log to see what you receive
+        setPlayers(data);
+      }
+      setLoading(false);
+    };
+    fetchPlayers();
+  }, []);
+
+  const handleDelete = async (id) => {
+    const { error } = await supabase.from('teams_members').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting player:', error);
+    } else {
+      setPlayers(players.filter((player) => player.id !== id));
+    }
+  };
+
+  if (loading) {
+    return <div>Loading players...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  return (
+    <div>
+      <h2>Players</h2>
+      {players.length === 0 ? (
+        <p>No players found. Have you added any yet?</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>Player Name</th>
+              <th>Team</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {players.map((player) => (
+              <tr key={player.id}>
+                <td>{player.player_name}</td>
+                {/* Use optional chaining to prevent errors if team is null */}
+                <td>{player.teams?.school_name  || 'N/A'}</td>
+                <td>
+                  <button onClick={() => handleDelete(player.id)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+export default Players;
