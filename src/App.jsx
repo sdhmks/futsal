@@ -23,7 +23,7 @@ function App() {
   };
 
   return (
-    <Router>
+    <Router basename="/futsal">
       <Container fluid className="p-0">
         <Row>
           <Col>
